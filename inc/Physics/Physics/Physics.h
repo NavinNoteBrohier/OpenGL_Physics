@@ -19,7 +19,10 @@ namespace Physics
 	class PhysicsRenderer;
 	class Collider;
 	class SphereCollider;
+	class Constraint;
+	class Spring;
 
+#pragma region //Structs
 
 #pragma region Intersect
 
@@ -29,6 +32,10 @@ namespace Physics
 	};
 
 #pragma endregion
+
+#pragma endregion
+
+#pragma region //Classes
 
 #pragma region // Physics Objects
 	class PhysicsObjects
@@ -113,8 +120,14 @@ namespace Physics
 
 		void ResolveCollisions();
 
+		//Constraints
+		void AttatchConstraint(Constraint* con);
+		void RemoveConstraint(Constraint* con);
+		const vector<Constraint*> & GetConstraints() const;
+
 	protected:
 		vector<PhysicsObjects*> m_objects;
+		vector<Constraint*> m_constraints;
 		vec3 m_GlobalForce;
 
 		void DetectCollisions();
@@ -140,11 +153,12 @@ namespace Physics
 		};
 
 		void Draw(PhysicsScene *a_Scene);
-		void RenderGizmosPhysics(PhysicsScene* a_scene);
+
 		RenderInfo* GetRenderInfo(PhysicsObjects* obj);
 	protected:
 		map<PhysicsObjects*, RenderInfo> m_renderInfo;
-
+		void RenderGizmosPhysics(PhysicsScene* a_scene);
+		void RenderGizmosConstraints(PhysicsScene* a_scene);
 
 	private:
 
@@ -164,7 +178,7 @@ namespace Physics
 			AABB,
 			OBB
 		};
-
+		//
 		Collider(Type type);
 		virtual ~Collider();
 		//
@@ -224,6 +238,57 @@ namespace Physics
 
 #pragma endregion
 
+#pragma region //Physics Constraint
+
+	class Constraint
+	{
+	public:
+
+		enum class Type
+		{
+			SPRING,JOINT
+		};
+
+		Constraint(std::vector<PhysicsObjects*> objects, Type type);
+
+		Constraint();
+		virtual ~Constraint();
+
+		virtual void Update(float deltatime) = 0;// {/* Intentionally left empty. */};
+
+		const vector<PhysicsObjects*> & GetObjects() { return m_Objects; };
+		Type GetType() const { return m_type; };
 
 
-}
+
+	protected:
+		vector<PhysicsObjects*> m_Objects;
+		Type m_type;
+	private:
+	};
+
+#pragma region //Spring
+	class Spring : public Constraint
+	{
+	public:
+		Spring(PhysicsObjects *objA, PhysicsObjects *objB);
+		Spring(PhysicsObjects *objA, PhysicsObjects *objB, float Length, float Stiff, float Friction);
+		virtual ~Spring();
+
+		void Update(float deltatime);
+
+	protected:
+		float m_length;
+		float m_stiffness;
+		float m_friction;
+	private:
+	};
+
+
+#pragma endregion
+
+#pragma endregion
+
+#pragma endregion
+
+};

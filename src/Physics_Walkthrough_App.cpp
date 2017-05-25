@@ -6,12 +6,13 @@
 #include "Camera.h"
 #include "Physics\Physics\Physics.h"
 #include <time.h>
+#include <imgui.h>
 
 using namespace glm;
 using namespace std;
 using namespace Physics;
 
-
+vec3* FixedPosition;
 
 Physics_Walkthrough_App::Physics_Walkthrough_App()
 {
@@ -40,7 +41,6 @@ bool Physics_Walkthrough_App::startup()
 
 	srand(time(NULL));
 
-
 	// Init Physic's Scene
 	PhysicCollection = new PhysicsScene();
 	PhysicCollection->ApplyGlobalForce(vec3(0, -9.807, 0));
@@ -52,7 +52,91 @@ bool Physics_Walkthrough_App::startup()
 	maxmass = 20;
 	minfriction = 1;
 	maxfriction = 20;
-	
+
+	///
+	char izard[] = "not as good as Venasaur";///
+	///
+
+
+
+	//Jello
+	const int maxX = 10;
+	const int maxY = 10;
+	const int maxZ = 10;
+	int NumberofFollowers = 500;
+
+	//Fixed object.
+	FixedPosition = new vec3(30, 0, 5);
+	PhysicsObjects *FixedObject = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), 100 * NumberofFollowers, 0);
+	if (FixedPosition != nullptr)
+	{
+
+		FixedObject->SetPosition(*FixedPosition);
+		FixedObject->AttatchVector(FixedPosition);
+		FixedObject->SetCollider(new SphereCollider(1.0f));
+		PhysicCollection->AttatchObject(FixedObject);
+		PhysicsRendering->GetRenderInfo(FixedObject)->color = vec4(glm::vec4(
+			rand() % 255 / 255.0f,
+			rand() % 255 / 255.0f,
+			rand() % 255 / 255.0f,
+			1));
+	};
+
+	for (int i = 0; i < NumberofFollowers; i++)
+	{
+		PhysicsObjects *left = new PhysicsObjects();
+		left->SetPosition(vec3(FixedObject->Getpos().x + (i *1), 1, FixedObject->Getpos().z + (i * 1)));
+		left->SetCollider(new SphereCollider(0.1f));
+		left->SetMass(10);
+		left->SetFriction(5);
+		PhysicCollection->AttatchObject(left);
+		PhysicsRendering->GetRenderInfo(left)->color = vec4(glm::vec4(0, 1, 0, 1));
+
+		//PhysicsObjects *right = new PhysicsObjects();
+		//right->SetPosition(vec3(0, 1, 10 + (i * 2)));
+		//right->SetCollider(new SphereCollider(0.5f));
+		//right->SetMass(1);
+		//right->SetFriction(1);
+		//PhysicCollection->AttatchObject(right);
+		//PhysicsRendering->GetRenderInfo(right)->color = vec4(glm::vec4(0, 1, 0, 1));
+
+		//Spring *spring = new Spring(left, right, 2, 300, 0.5f);
+		//PhysicCollection->AttatchConstraint(spring);
+		
+		if (FixedPosition != nullptr)
+		{
+			Spring *springS = new Spring(left, PhysicCollection->GetObjects()[i], 0.1, 1000, 1.0f);
+			PhysicCollection->AttatchConstraint(springS);
+		//	springS = new Spring(right, FixedObject, 5, 300, 0.5f);
+		//	PhysicCollection->AttatchConstraint(springS);
+		}
+	}
+	// 
+	for (int x = 0; x < maxX; x++)
+	{
+		for (int y = 0; y < maxY; y++)
+		{
+			for (int z = 0; z < maxZ; z++)
+			{
+			// In here we add constraints from each node to each other 
+			// Around it we (above, below, left, right, forwards, bacwkwards and diagonals)
+
+			// Most likely this will be about creating a list of connections between objects
+			// Then creating a bunch of constraints using those connections.
+			
+			// Try starting out with a sheet of physics objects that are connected only verically and horizontally.
+
+			// Then add some diagonals in the 2 dimensions
+
+			// Then expand to three dimensions.
+
+			// at every step, try throwing projectiles at your creation and see how it reacts.
+			}
+		}
+	}
+
+
+
 
 	// Add objects to scene
 	//Camera Sphere.
@@ -62,11 +146,15 @@ bool Physics_Walkthrough_App::startup()
 	CameraObject->SetCollider(new SphereCollider(1.0f));
 	CameraObject->SetToDraw(false);
 	PhysicCollection->AttatchObject(CameraObject);
-	char izard[] = "not as good as Venasaur";
-	//Jello
+	//Spring *springS = new Spring(left, CameraObject, 5, 300, 0.5f);
+	//PhysicCollection->AttatchConstraint(springS);
+	//springS = new Spring(right, CameraObject, 5, 300, 0.5f);
+	//PhysicCollection->AttatchConstraint(springS);
+
+	// Sphere Grid
 	for (int x = 0; x < 20; x++)
 	{
-		for (int y = 0; y < 10; y++)
+		for (int y = 0; y <3; y++)
 		{
 			for (int z = 0; z < 20; z++)
 			{
@@ -74,7 +162,7 @@ bool Physics_Walkthrough_App::startup()
 				int tempfriction = 1;
 				PhysicsObjects *obj = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), tempmass, tempfriction);
 				obj->SetPosition(vec3(x - 5.0f, y, z - 5.0f));
-				obj->SetCollider(new SphereCollider(0.3f));
+				obj->SetCollider(new SphereCollider(0.2f));
 				PhysicCollection->AttatchObject(obj);
 				PhysicsRendering->GetRenderInfo(obj)->color = vec4(glm::vec4(
 					rand() % 255 / 255.0f,
@@ -86,7 +174,7 @@ bool Physics_Walkthrough_App::startup()
 	}
 	
 	//Falling Spheres
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		int tempmass = (rand() % 200 + 1);
 		int tempfriction = (rand() % 2);
@@ -121,7 +209,7 @@ void Physics_Walkthrough_App::update(float deltaTime)
 	aie::Input* input = aie::Input::getInstance();
 
 	float Force = 2;
-
+	//Debug keys
 	if (input->isKeyDown(aie::INPUT_KEY_HOME))
 	{
 		for (int i = 0; i < PhysicCollection->GetObjects().size(); i++)
@@ -146,7 +234,7 @@ void Physics_Walkthrough_App::update(float deltaTime)
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_SPACE) && !Pressed)
 	{
-		PhysicsObjects *obj = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), 1, 1);
+		PhysicsObjects *obj = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), 5, 1);
 		obj->SetPosition(m_camera->GetPosition());
 		obj->SetVelocity(m_camera->GetFront() * 20.0f);
 		obj->SetCollider(new SphereCollider(1.0f));
@@ -157,13 +245,40 @@ void Physics_Walkthrough_App::update(float deltaTime)
 		Pressed = true;
 	}
 	else if(input->isKeyUp(aie::INPUT_KEY_SPACE)) Pressed = false;
+
+	// Fixed Pos
+	if (input->isKeyDown(aie::INPUT_KEY_RIGHT))
+	{
+		FixedPosition->x += Speed * deltaTime;
+	}
+	if (input->isKeyDown(aie::INPUT_KEY_LEFT))
+	{
+		FixedPosition->x-= Speed * deltaTime;
+	}
+	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
+	{
+		FixedPosition->z+= Speed * deltaTime;
+	}
+	if (input->isKeyDown(aie::INPUT_KEY_UP))
+	{
+		FixedPosition->z-= Speed * deltaTime;
+	}
+
 #pragma endregion
 
+#pragma region //UI
+	ImGui::Begin("Fixed object");
+	ImGui::SliderFloat("Fixed Object X", &FixedPosition->x, -50, 50);
+	ImGui::SliderFloat("Fixed Object Y", &FixedPosition->y, -50, 50);
+	ImGui::SliderFloat("Fixed Object Z", &FixedPosition->z, -50, 50);
+	ImGui::SliderFloat("Speed", &Speed, 0.5f, 50);
+	ImGui::End();
+#pragma endregion
 
+	// Update Physics.
 	PhysicCollection->Update(deltaTime);
-	// quit if we press escape
 
-	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))// quit if we press escape
 		quit();
 }
 
@@ -181,7 +296,7 @@ void Physics_Walkthrough_App::draw()
 //	aie::Gizmos::addSphere(SphereObject->Getpos(), 1, 10, 10,vec4(1,0,0,1));
 
 	//Create gizmos
-	PhysicsRendering->RenderGizmosPhysics(PhysicCollection);
+	PhysicsRendering->Draw(PhysicCollection);
 	//RenderGizmoObjects();
 	
 

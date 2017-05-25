@@ -89,14 +89,34 @@ Physics::PhysicsScene::~PhysicsScene()
 
 	m_objects.clear();
 
+	for (auto iter = m_constraints.begin(); iter != m_constraints.end(); iter++)
+	{
+		delete *iter;
+	}
+	m_constraints.clear();
 }
 
 void Physics::PhysicsScene::Update(float a_deltatime)
 {
+	// Update all Constraints
+	for (auto iter = m_constraints.begin(); iter != m_constraints.end(); iter++)
+	{
+		(*iter)->Update(a_deltatime);
+	}
+
+	//
 	vector<int> LifetimeNumbers;
+
+	float GravAccel = 0;
+
+	// Update all objects.
 	for (auto iter = m_objects.begin(); iter != m_objects.end(); iter++)
 	{
 		PhysicsObjects *obj = *iter;
+
+		vec3 CurrentAccel = obj->GetAcceleration();
+
+		obj->SetAcceleration(CurrentAccel + GravAccel);
 
 		obj->ApplyForce(m_GlobalForce);
 
@@ -197,6 +217,32 @@ void Physics::PhysicsScene::ResolveCollisions()
 	}
 }
 
+void Physics::PhysicsScene::AttatchConstraint(Constraint * con)
+{
+	auto iter = find(m_constraints.begin(), m_constraints.end(),con);
+
+	if (iter == m_constraints.end())
+	{
+		m_constraints.push_back(con);
+	}
+}
+
+void Physics::PhysicsScene::RemoveConstraint(Constraint * con)
+{
+	auto iter = find(m_constraints.begin(), m_constraints.end(), con);
+
+	if (iter != m_constraints.end())
+	{
+		delete *iter;
+		m_constraints.erase(iter);
+	}
+}
+
+const vector<Constraint*>& Physics::PhysicsScene::GetConstraints() const
+{
+	return m_constraints;
+}
+
 void Physics::PhysicsScene::DetectCollisions()
 {
 	m_collisions.clear(); // Remove old collisions from previous frame.
@@ -242,7 +288,8 @@ Physics::PhysicsRenderer::~PhysicsRenderer()
 
 void Physics::PhysicsRenderer::Draw(PhysicsScene * a_Scene)
 {
-
+	RenderGizmosPhysics(a_Scene);
+	RenderGizmosConstraints(a_Scene);
 }
 
 void Physics::PhysicsRenderer::RenderGizmosPhysics(PhysicsScene * a_scene)
@@ -271,6 +318,27 @@ void Physics::PhysicsRenderer::RenderGizmosPhysics(PhysicsScene * a_scene)
 			}
 
 		}
+}
+
+void Physics::PhysicsRenderer::RenderGizmosConstraints(PhysicsScene * a_scene)
+{
+	for (auto iter = a_scene->GetConstraints().begin(); iter < a_scene->GetConstraints().end(); iter++)
+	{
+		switch ((*iter)->GetType())
+		{
+		case Constraint::Type::JOINT:
+			break;
+
+		case Constraint::Type::SPRING:
+			// Assuming that springs have only two objects.
+			aie::Gizmos::addLine((*iter)->GetObjects()[0]->Getpos(), (*iter)->GetObjects()[1]->Getpos() , vec4(0, 1, 1, 1)); 
+			break;
+
+		default:
+			break;
+		}
+	}
+
 }
 
 PhysicsRenderer::RenderInfo * Physics::PhysicsRenderer::GetRenderInfo(PhysicsObjects * obj)
@@ -361,4 +429,72 @@ void Physics::SphereCollider::Transform(PhysicsObjects * obj)
 
 #pragma endregion
 
+#pragma endregion
+
+#pragma region // Physics Constraint
+
+Physics::Constraint::Constraint(std::vector<PhysicsObjects*> objects, Type type):
+	m_Objects(objects),
+	m_type(type)
+{
+
+}
+
+Physics::Constraint::Constraint()
+{
+}
+
+Physics::Constraint::~Constraint()
+{
+}
+
+// Constructors make springs using eactly two objects.
+
+Physics::Spring::Spring(PhysicsObjects *objA, PhysicsObjects *objB) :
+	Constraint(vector<PhysicsObjects*>{objA, objB}, Constraint::Type::SPRING),
+	m_length(5.0f),
+	m_stiffness(100.0f),
+	m_friction(1.0f)
+{
+}
+
+Physics::Spring::Spring(PhysicsObjects * objA, PhysicsObjects * objB, float Length, float Stiff, float Friction) :
+Constraint(vector<PhysicsObjects*>{objA, objB}, Constraint::Type::SPRING),
+m_length(Length),
+m_stiffness(Stiff),
+m_friction(Friction)
+{
+}
+
+Physics::Spring::~Spring()
+{
+}
+
+void Physics::Spring::Update(float deltatime)
+{
+
+	// All springs have exactly two objects in their vector.
+	PhysicsObjects* ObjA = m_Objects[0];
+	PhysicsObjects* ObjB = m_Objects[1];
+	// Measure the distance between two objects.
+	vec3 SpringVec = ObjB->Getpos() - ObjA->Getpos();
+	float distance = length(SpringVec);
+
+	// Create a foce along the vector between them, based on
+	// how far away we are from our length.
+	vec3 force;
+
+	if (distance != 0)
+	{
+		force += normalize(SpringVec) * (distance - m_length) * m_stiffness;
+		// Edit that force for friction(the faster things are moving, the more we slow them down)
+		force += (dot(ObjB->GetVelocity() - ObjA->GetVelocity(), SpringVec)) * normalize(SpringVec) * m_friction;
+	}
+
+
+
+	// Apply the force to both objects in the required direction.
+	ObjA->ApplyForce(force);
+	ObjB->ApplyForce(-force);
+}
 #pragma endregion

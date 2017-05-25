@@ -27,16 +27,11 @@ public:
 	virtual void draw();
 
 	void RenderGizmosGrid();
-
+	
 
 protected:
 
-	Physics::PhysicsScene* PhysicCollection = nullptr;
 
-	Physics::PhysicsRenderer* PhysicsRendering = nullptr;
-
-	// camera transforms
-	Camera *m_camera = nullptr;
 
 private:
 	void RenderGizmoObjects();
@@ -51,5 +46,13 @@ private:
 	float maxfriction;
 	float minmass;
 	float minfriction;
+
+	Physics::PhysicsScene* PhysicCollection = nullptr;
+	Physics::PhysicsRenderer* PhysicsRendering = nullptr;
+
+	float Speed = 50.0f;
+
+	// camera transforms
+	Camera *m_camera = nullptr;
 
 };

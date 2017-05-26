@@ -63,10 +63,10 @@ bool Physics_Walkthrough_App::startup()
 	const int maxX = 10;
 	const int maxY = 10;
 	const int maxZ = 10;
-	int NumberofFollowers = 500;
+	int NumberofFollowers = 10;
 
 	//Fixed object.
-	FixedPosition = new vec3(30, 0, 5);
+	FixedPosition = new vec3(60, 0, 60);
 	PhysicsObjects *FixedObject = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), 100 * NumberofFollowers, 0);
 	if (FixedPosition != nullptr)
 	{
@@ -82,33 +82,36 @@ bool Physics_Walkthrough_App::startup()
 			1));
 	};
 
-	for (int i = 0; i < NumberofFollowers; i++)
+	for (int j = 0; j < 1; j++)
 	{
-		PhysicsObjects *left = new PhysicsObjects();
-		left->SetPosition(vec3(FixedObject->Getpos().x + (i *1), 1, FixedObject->Getpos().z + (i * 1)));
-		left->SetCollider(new SphereCollider(0.1f));
-		left->SetMass(10);
-		left->SetFriction(5);
-		PhysicCollection->AttatchObject(left);
-		PhysicsRendering->GetRenderInfo(left)->color = vec4(glm::vec4(0, 1, 0, 1));
-
-		//PhysicsObjects *right = new PhysicsObjects();
-		//right->SetPosition(vec3(0, 1, 10 + (i * 2)));
-		//right->SetCollider(new SphereCollider(0.5f));
-		//right->SetMass(1);
-		//right->SetFriction(1);
-		//PhysicCollection->AttatchObject(right);
-		//PhysicsRendering->GetRenderInfo(right)->color = vec4(glm::vec4(0, 1, 0, 1));
-
-		//Spring *spring = new Spring(left, right, 2, 300, 0.5f);
-		//PhysicCollection->AttatchConstraint(spring);
-		
-		if (FixedPosition != nullptr)
+		for (int i = 0; i < NumberofFollowers; i++)
 		{
-			Spring *springS = new Spring(left, PhysicCollection->GetObjects()[i], 0.1, 1000, 1.0f);
-			PhysicCollection->AttatchConstraint(springS);
-		//	springS = new Spring(right, FixedObject, 5, 300, 0.5f);
-		//	PhysicCollection->AttatchConstraint(springS);
+			PhysicsObjects *left = new PhysicsObjects();
+			left->SetPosition(vec3(FixedObject->Getpos().x + (i * 1), 1, FixedObject->Getpos().z + (j * 1)));
+			left->SetCollider(new SphereCollider(0.05f));
+			left->SetMass(1);
+			left->SetFriction(0.1f);
+			PhysicCollection->AttatchObject(left);
+			PhysicsRendering->GetRenderInfo(left)->color = vec4(glm::vec4(0, 1, 0, 1));
+
+			//PhysicsObjects *right = new PhysicsObjects();
+			//right->SetPosition(vec3(0, 1, 10 + (i * 2)));
+			//right->SetCollider(new SphereCollider(0.5f));
+			//right->SetMass(1);
+			//right->SetFriction(1);
+			//PhysicCollection->AttatchObject(right);
+			//PhysicsRendering->GetRenderInfo(right)->color = vec4(glm::vec4(0, 1, 0, 1));
+
+			//Spring *spring = new Spring(left, right, 2, 300, 0.5f);
+			//PhysicCollection->AttatchConstraint(spring);
+
+			if (FixedPosition != nullptr)
+			{
+				Spring *springS = new Spring(left, PhysicCollection->GetObjects()[i], 5.0f, 500.0f, 1.0f);
+				PhysicCollection->AttatchConstraint(springS);
+				//	springS = new Spring(right, FixedObject, 5, 300, 0.5f);
+				//	PhysicCollection->AttatchConstraint(springS);
+			}
 		}
 	}
 	// 
@@ -120,17 +123,32 @@ bool Physics_Walkthrough_App::startup()
 			{
 			// In here we add constraints from each node to each other 
 			// Around it we (above, below, left, right, forwards, bacwkwards and diagonals)
+				if (!(z != 0 && x != 0 && y != 0))
+				{
+					int MaxLimitx = x * maxX;
+					int MaxLimity = y * maxY;
+					int MaxLimitz = (maxX * maxY) * z;
+					int MinLimitx = x * maxX;
+					int MinLimity = y * maxY;
+					int MinLimitz = (maxX * maxY) * z;
 
-			// Most likely this will be about creating a list of connections between objects
-			// Then creating a bunch of constraints using those connections.
-			
-			// Try starting out with a sheet of physics objects that are connected only verically and horizontally.
 
-			// Then add some diagonals in the 2 dimensions
+					// Most likely this will be about creating a list of connections between objects
+					// Then creating a bunch of constraints using those connections.
+					
 
-			// Then expand to three dimensions.
+					// Try starting out with a sheet of physics objects that are connected only verically and horizontally.
 
-			// at every step, try throwing projectiles at your creation and see how it reacts.
+
+					// Then add some diagonals in the 2 dimensions
+
+
+					// Then expand to three dimensions.
+
+
+					// at every step, try throwing projectiles at your creation and see how it reacts.
+				
+				}
 			}
 		}
 	}
@@ -152,11 +170,11 @@ bool Physics_Walkthrough_App::startup()
 	//PhysicCollection->AttatchConstraint(springS);
 
 	// Sphere Grid
-	for (int x = 0; x < 20; x++)
+	for (int x = 0; x < 25; x++)
 	{
-		for (int y = 0; y <3; y++)
+		for (int y = 0; y <1; y++)
 		{
-			for (int z = 0; z < 20; z++)
+			for (int z = 0; z < 25; z++)
 			{
 				int tempmass = 1;
 				int tempfriction = 1;
@@ -241,10 +259,57 @@ void Physics_Walkthrough_App::update(float deltaTime)
 		obj->SetLifeTime(10.0f);
 		PhysicsRendering->GetRenderInfo(obj)->color = vec4(0.1f, 0.1f, 0.1f, 1.0f);
 		PhysicCollection->AttatchObject(obj);
-
 		Pressed = true;
 	}
 	else if(input->isKeyUp(aie::INPUT_KEY_SPACE)) Pressed = false;
+	if (input->isKeyDown(aie::INPUT_KEY_O) && !Pressed)
+	{
+		PhysicsObjects *obj = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), 5, 1);
+		obj->SetPosition(m_camera->GetPosition());
+		obj->SetVelocity(m_camera->GetFront() * 20.0f);
+		obj->SetCollider(new SphereCollider(1.0f));
+		obj->SetLifeTime(10.0f);
+		PhysicsRendering->GetRenderInfo(obj)->color = vec4(0.1f, 0.1f, 0.1f, 1.0f);
+		PhysicCollection->AttatchObject(obj);
+
+		if (FirstShot == false)
+		{
+			Spring *springS = new Spring(PhysicCollection->GetObjects()[PhysicCollection->GetObjects().size() - 1], PhysicCollection->GetObjects()[PhysicCollection->GetObjects().size() - 2], 0.1, 100, 1.0f);
+			PhysicCollection->AttatchConstraint(springS);
+
+		}
+		else
+		{
+			FirstShot = false;
+		}
+
+		Pressed = true;
+	}
+	else if (input->isKeyUp(aie::INPUT_KEY_O)) Pressed = false;
+	if (input->isKeyDown(aie::INPUT_KEY_P) && !Pressed)
+	{
+		PhysicsObjects *obj = new PhysicsObjects(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 0, 0), 5, 1);
+		obj->SetPosition(m_camera->GetPosition());
+		obj->SetVelocity(m_camera->GetFront() * 20.0f);
+		obj->SetCollider(new SphereCollider(1.0f));
+		obj->SetLifeTime(10.0f);
+		PhysicsRendering->GetRenderInfo(obj)->color = vec4(0.1f, 0.1f, 0.1f, 1.0f);
+		PhysicCollection->AttatchObject(obj);
+
+		if (FirstShot == false)
+		{
+			Spring *springS = new Spring(PhysicCollection->GetObjects()[PhysicCollection->GetObjects().size() - 1], PhysicCollection->GetObjects()[(rand() %  (PhysicCollection->GetObjects().size() - 2))], 0.1, 100, 1.0f);
+			PhysicCollection->AttatchConstraint(springS);
+
+		}
+		else
+		{
+			FirstShot = false;
+		}
+
+		Pressed = true;
+	}
+	else if (input->isKeyUp(aie::INPUT_KEY_P)) Pressed = false;
 
 	// Fixed Pos
 	if (input->isKeyDown(aie::INPUT_KEY_RIGHT))

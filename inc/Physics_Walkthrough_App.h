@@ -52,6 +52,8 @@ private:
 
 	float Speed = 50.0f;
 
+	bool FirstShot = true;
+
 	// camera transforms
 	Camera *m_camera = nullptr;
 
